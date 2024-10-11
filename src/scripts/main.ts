@@ -1,39 +1,24 @@
 import '../styles/style.scss';
+// import MobileMenuClass from './mobile.ts';
 
 document.addEventListener('DOMContentLoaded', () => {
-  class MobileMenuClass {
-    private openButton: HTMLButtonElement | null;
-    private closeButton: HTMLButtonElement | null;
-    private menu: HTMLElement | null;
-    private menuLinks: NodeListOf<HTMLElement>;
+  class DeskTopMenuClass {
+    private desktopMenu: HTMLElement | null;
     constructor() {
-      this.openButton = document.querySelector('.mobile-button-open');
-      this.closeButton = document.querySelector('.mobile-button-close');
-      this.menu = document.querySelector('.mobile-body');
-      this.menuLinks = document.querySelectorAll('.item-mobile-menu__link_next');
+      this.desktopMenu = document.getElementById('desk-menu')!;
     }
+
     public init = (): void => {
-      if (!this.openButton || !this.closeButton || !this.menu) {
+      if (!this.desktopMenu) {
         console.warn('One or more required elements not found!');
         return;
       }
-      this.initButtonsListeners();
-      this.initLinksListeners();
+      this.initListeners();
     };
-    private toggle = (): void => {
-      this.menu?.classList.toggle('is-open');
-      this.openButton?.classList.toggle('is-open');
-      this.closeButton?.classList.toggle('is-open');
-      document.body.classList.toggle('is-menu-open');
-    };
-    private initButtonsListeners = (): void => {
-      this.openButton?.addEventListener('click', this.toggle);
-      this.closeButton?.addEventListener('click', this.toggle);
-    };
-
     private closeNoTargetItems = (e: Event): void => {
       const target = e.target as HTMLElement;
-      this.menuLinks.forEach(link => {
+      const menuLinks = this.desktopMenu?.querySelectorAll('.next-sub-list')! as NodeListOf<HTMLElement>;
+      menuLinks.forEach(link => {
         const submenu = link.nextElementSibling as HTMLElement;
         if (submenu?.classList.contains('is-open') && link !== target) {
           submenu?.classList.remove('is-open');
@@ -42,27 +27,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     };
-    private toggleSubmenus = (e: Event): void => {
-      e.preventDefault();
-      const target = e.target as HTMLElement;
-      const submenu = target.nextElementSibling as HTMLElement;
-      this.closeNoTargetItems(e);
-      if (submenu) {
-        target.classList.toggle('is-open');
-        submenu.classList.toggle('is-open');
-        requestAnimationFrame(() => {
-          submenu.style.maxHeight = submenu.style.maxHeight === '' ? `${submenu.scrollHeight}px` : '';
+    private clickOutside = (e: Event) => {
+      const target = e.target as Element;
+      if (!target.closest('.desk-nav__item')) {
+        const menuLinks = this.desktopMenu?.querySelectorAll('.next-sub-list')! as NodeListOf<HTMLElement>;
+        menuLinks.forEach(link => {
+          const submenu = link.nextElementSibling as HTMLElement;
+          if (submenu?.classList.contains('is-open') && link !== target) {
+            submenu?.classList.remove('is-open');
+            link?.classList.remove('is-open');
+          }
         });
       }
     };
+    private toggle = (e: Event) => {
+      const target = e.target as Element;
+      if (target && target.classList.contains('next-sub-list')) {
+        e.preventDefault();
+        const submenu = target.nextElementSibling as Element;
+        if (submenu) {
+          this.closeNoTargetItems(e);
+          this.clickOutside(e);
+          submenu.classList.toggle('is-open');
+          target.classList.toggle('is-open');
+        }
+      }
+    };
 
-    private initLinksListeners = (): void => {
-      this.menuLinks.forEach(link => {
-        link.addEventListener('click', this.toggleSubmenus);
-      });
+    private initListeners = () => {
+      this.desktopMenu?.addEventListener('click', this.toggle);
+      document.addEventListener('click', this.clickOutside);
     };
   }
 
-  const mobileMenu = new MobileMenuClass();
-  mobileMenu.init();
+  const desktopMenu = new DeskTopMenuClass();
+  desktopMenu.init();
 });
